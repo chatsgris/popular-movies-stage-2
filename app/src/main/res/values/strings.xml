@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Popular Movies Stage 1</string>
+    <string name="movie_image_content_description">Movie Poster</string>
+</resources>
