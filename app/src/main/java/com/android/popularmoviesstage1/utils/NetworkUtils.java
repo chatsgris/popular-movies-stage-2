@@ -28,7 +28,7 @@ public class NetworkUtils {
     final static String GET_VIDEO_URL =
             "https://api.themoviedb.org/3/movie";
 
-    public static Uri buildTrailerUri(String apiKey, String movieId) {
+    public static Uri buildTrailerUri(String apiKey, int movieId) {
         String videoInfo;
         String videoKey = null;
 
@@ -63,9 +63,9 @@ public class NetworkUtils {
         }
     }
 
-    public static URL buildReviewUrl (String apiKey, String movieId) {
+    public static URL buildReviewUrl (String apiKey, int movieId) {
         Uri uri = Uri.parse(GET_VIDEO_URL).buildUpon()
-                .appendPath(movieId)
+                .appendPath(String.valueOf(movieId))
                 .appendPath("reviews")
                 .appendQueryParameter("api_key", apiKey)
                 .build();
@@ -78,9 +78,9 @@ public class NetworkUtils {
         return url;
     }
 
-    public static URL buildGetVideoUrl (String apiKey, String movieId) {
+    public static URL buildGetVideoUrl (String apiKey, int movieId) {
         Uri builtUri = Uri.parse(GET_VIDEO_URL).buildUpon()
-                .appendPath(movieId)
+                .appendPath(String.valueOf(movieId))
                 .appendPath("videos")
                 .appendQueryParameter("api_key", apiKey)
                 .build();

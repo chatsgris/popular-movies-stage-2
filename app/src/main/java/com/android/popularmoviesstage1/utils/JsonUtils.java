@@ -20,12 +20,19 @@ public class JsonUtils {
 
     public static JSONObject getMovieInfo(String json, int position) throws JSONException {
         JSONObject jsonObject = new JSONObject(json);
-        return jsonObject.getJSONArray("results").getJSONObject(position);
+        JSONObject movieInfo = jsonObject.getJSONArray("results").getJSONObject(position);
+        return movieInfo;
     }
 
     public static JSONObject getReviewInfo(String json, int position) throws JSONException {
         JSONObject jsonObject = new JSONObject(json);
         return jsonObject.getJSONArray("results").getJSONObject(position);
+    }
+
+    public static String getMovieVoting(JSONObject movieInfo) throws JSONException {
+        String vote = movieInfo
+                .getString("vote_average");
+        return vote;
     }
 
     public static int getReviewCount(JSONObject reviewInfo) throws JSONException {
@@ -41,33 +48,32 @@ public class JsonUtils {
     }
 
     public static String getPosterPath(JSONObject movieInfo) throws JSONException {
-        return movieInfo
+        String posterPath = movieInfo
                 .getString("poster_path")
                 .substring(1);
+        return posterPath;
     }
 
     public static String getMovieTitle(JSONObject movieInfo) throws JSONException {
-        return movieInfo
+        String title = movieInfo
                 .getString("title");
+        return title;
     }
 
     public static String getMovieRelease(JSONObject movieInfo) throws JSONException {
-        return movieInfo
+        String release = movieInfo
                 .getString("release_date");
+        return release;
     }
 
-    public static String getMovieId(JSONObject movieInfo) throws JSONException {
-        return movieInfo
-                .getString("id");
-    }
-
-    public static String getMovieVoting(JSONObject movieInfo) throws JSONException {
-        return movieInfo
-                .getString("vote_average");
+    public static int getMovieId(JSONObject movieInfo) throws JSONException {
+        return Integer.parseInt(movieInfo
+                .getString("id"));
     }
 
     public static String getMoviePlot(JSONObject movieInfo) throws JSONException {
-        return movieInfo
+        String plot = movieInfo
                 .getString("overview");
+        return plot;
     }
 }
