@@ -1,12 +1,9 @@
 package com.android.popularmoviesstage1;
-
 import android.content.ContentValues;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,8 +14,7 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
-
-import com.android.popularmoviesstage1.data.FavoriteContract;
+import com.android.popularmoviesstage1.data.MoviesContract;
 import com.android.popularmoviesstage1.utils.JsonUtils;
 import com.android.popularmoviesstage1.utils.NetworkUtils;
 import com.squareup.picasso.Picasso;
@@ -27,9 +23,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.ExecutionException;
-
-import static com.android.popularmoviesstage1.MainActivity.mDb;
-import static com.android.popularmoviesstage1.MainActivity.mSharedPreferences;
 
 public class DetailsActivity extends AppCompatActivity {
 
@@ -43,47 +36,68 @@ public class DetailsActivity extends AppCompatActivity {
     TextView mFavoriteText;
     Button mTrailerButton;
     RecyclerView recyclerView;
-
-    JSONObject jsonObj;
-    String title;
-    String poster;
-    String release;
-    String vote;
-    String plot;
-    String movieId;
-    String movieData;
     String mReviewData;
-    Boolean favoriteStatus;
-    Long viewId;
+    int mMovieId;
 
-    public void addFavorite(String movieData) {
+    /*public void addFavorite() {
         ContentValues cv = new ContentValues();
-        cv.put(FavoriteContract.FavoriteEntry.COLUMN_MOVIE_DATA, movieData);
-        mDb.insert(FavoriteContract.FavoriteEntry.TABLE_NAME, null, cv);
-        MainActivity.favoritesAdapter.swapCursor(MainActivity.getAllFavorites());
-    }
-
-    public void removeFavorite(long id) {
-        if (mDb.delete(FavoriteContract.FavoriteEntry.TABLE_NAME, FavoriteContract.FavoriteEntry._ID + "=" + id, null) > 0) {
-            MainActivity.favoritesAdapter.swapCursor(MainActivity.getAllFavorites());
-        }
-    }
+        mDb.update(MoviesContract.MovieEntry.TABLE_NAME, cv, MoviesContract.MovieEntry.COLUMN_MOVIE_ID + "=?", new String[]{String.valueOf(movieId)});
+    }*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
-        findViews();
+
+        mTitle = findViewById(R.id.detail_title);
+        mPoster = findViewById(R.id.detail_poster);
+        mRelease = findViewById(R.id.detail_release_date);
+        mVoting = findViewById(R.id.detail_vote_score);
+        mPlot = findViewById(R.id.detail_plot_data);
+        mFavoriteButton = findViewById(R.id.detail_favorite_icon);
+        mFavoriteText = findViewById(R.id.detail_favorite_text);
+        mTrailerButton = findViewById(R.id.detail_watch_trailer);
+
         Intent intentThatStartedThisActivity = getIntent();
-        getDataFromIntent(intentThatStartedThisActivity);
-        setDataToViews();
+        if (intentThatStartedThisActivity.hasExtra(Intent.EXTRA_TEXT)) {
+            String movieData = intentThatStartedThisActivity.getStringExtra(Intent.EXTRA_TEXT);
+
+            JSONObject jsonObj;
+            String title = null;
+            String poster = null;
+            String release = null;
+            String vote = null;
+            String plot = null;
+
+            try {
+                jsonObj = new JSONObject(movieData);
+                title = JsonUtils.getMovieTitle(jsonObj);
+                poster = NetworkUtils.buildPosterUrl(JsonUtils.getPosterPath(jsonObj));
+                release = JsonUtils.getMovieRelease(jsonObj);
+                vote = JsonUtils.getMovieVoting(jsonObj);
+                plot = JsonUtils.getMoviePlot(jsonObj);
+                mMovieId = JsonUtils.getMovieId(jsonObj);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            mTitle.setText(title);
+            Picasso.with(mPoster.getContext())
+                    .load(poster)
+                    .placeholder(R.drawable.placeholder)
+                    .into(mPoster);
+            mRelease.setText(release);
+            mVoting.setText(vote);
+            mPlot.setText(plot);
+        }
+
         setClicktoTrailer(mTrailerButton);
         setReviewView();
-        handleFavoriteButton(mFavoriteButton);
+        //handleFavoriteButton(mFavoriteButton);
     }
 
-    public void handleFavoriteButton(final ToggleButton toggleButton) {
-        if (favoriteStatus) {
+    /*public void handleFavoriteButton(final ToggleButton toggleButton) {
+        if (1 == 1) {
             toggleButton.setChecked(true);
             toggleButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_black_48dp));
         } else {
@@ -95,17 +109,14 @@ public class DetailsActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     toggleButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_black_48dp));
-                    addFavorite(movieData);
-                    mSharedPreferences.edit().putBoolean(movieId, true).apply();
+                    addFavorite();
                 }
                 else {
                     toggleButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_border_black_48dp));
-                    mSharedPreferences.edit().putBoolean(movieId, false).apply();
-                    removeFavorite(viewId);
                 }
             }
         });
-    }
+    }*/
 
     public static class ReviewInfoQueryTask extends AsyncTask<URL, Void, String> {
         @Override
@@ -121,33 +132,11 @@ public class DetailsActivity extends AppCompatActivity {
         }
     }
 
-    public void setDataToViews() {
-        mTitle.setText(title);
-        Picasso.with(mPoster.getContext())
-                .load(poster)
-                .placeholder(R.drawable.placeholder)
-                .into(mPoster);
-        mRelease.setText(release);
-        mVoting.setText(vote);
-        mPlot.setText(plot);
-    }
-
-    public void findViews() {
-        mTitle = findViewById(R.id.detail_title);
-        mPoster = findViewById(R.id.detail_poster);
-        mRelease = findViewById(R.id.detail_release_date);
-        mVoting = findViewById(R.id.detail_vote_score);
-        mPlot = findViewById(R.id.detail_plot_data);
-        mFavoriteButton = findViewById(R.id.detail_favorite_icon);
-        mFavoriteText = findViewById(R.id.detail_favorite_text);
-        mTrailerButton = findViewById(R.id.detail_watch_trailer);
-    }
-
     public void setClicktoTrailer(Button trailerButton) {
         trailerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Uri trailerUri = NetworkUtils.buildTrailerUri(MainActivity.mApiKey, movieId);
+                Uri trailerUri = NetworkUtils.buildTrailerUri(MainActivity.mApiKey, mMovieId);
                 Intent intent = new  Intent(Intent.ACTION_VIEW);
                 intent.setPackage("com.google.android.youtube");
                 intent.setData(trailerUri);
@@ -156,29 +145,9 @@ public class DetailsActivity extends AppCompatActivity {
         });
     }
 
-    public void getDataFromIntent(Intent intent) {
-        if (intent.hasExtra(Intent.EXTRA_TEXT)) {
-            movieData = intent.getStringExtra(Intent.EXTRA_TEXT);
-            try {
-                jsonObj = new JSONObject(movieData);
-                title = JsonUtils.getMovieTitle(jsonObj);
-                poster = NetworkUtils.buildPosterUrl(JsonUtils.getPosterPath(jsonObj));
-                release = JsonUtils.getMovieRelease(jsonObj);
-                vote = JsonUtils.getMovieVoting(jsonObj);
-                plot = JsonUtils.getMoviePlot(jsonObj);
-                movieId = JsonUtils.getMovieId(jsonObj);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        if (intent.hasExtra("favorite_status")) {
-            favoriteStatus = intent.getBooleanExtra("favorite_status", false);
-        }
-    }
-
     public void setReviewView() {
         try {
-            mReviewData = new ReviewInfoQueryTask().execute(NetworkUtils.buildReviewUrl(MainActivity.mApiKey, movieId)).get();
+            mReviewData = new ReviewInfoQueryTask().execute(NetworkUtils.buildReviewUrl(MainActivity.mApiKey, mMovieId)).get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
