@@ -71,4 +71,16 @@ public class CursorAdapter extends RecyclerView.Adapter<CursorAdapter.ViewHolder
             movieTitleView = itemView.findViewById(R.id.movie_title);
         }
     }
+
+    public Cursor swapCursor(Cursor c) {
+        if (mCursor == c) {
+            return null;
+        }
+        Cursor temp = mCursor;
+        this.mCursor = c;
+        if (c != null) {
+            this.notifyDataSetChanged();
+        }
+        return temp;
+    }
 }
