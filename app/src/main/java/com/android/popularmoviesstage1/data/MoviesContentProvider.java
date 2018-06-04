@@ -16,12 +16,12 @@ public class MoviesContentProvider extends ContentProvider {
     private MoviesDbHelper mMoviesDbHelper;
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     public static final int MOVIES = 100;
-    public static final int MOVIES_WITH_DATA = 101;
+    public static final int MOVIES_WITH_ID = 101;
 
     public static UriMatcher buildUriMatcher() {
         UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIES, MOVIES);
-        uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIES + "/*", MOVIES_WITH_DATA);
+        uriMatcher.addURI(MoviesContract.AUTHORITY, MoviesContract.PATH_MOVIES + "/#", MOVIES_WITH_ID);
         return uriMatcher;
     }
 
@@ -89,9 +89,9 @@ public class MoviesContentProvider extends ContentProvider {
         int match = sUriMatcher.match(uri);
         int tasksDeleted;
         switch (match) {
-            case MOVIES_WITH_DATA:
-                String movieData = uri.getPathSegments().get(1);
-                tasksDeleted = db.delete(MoviesContract.MovieEntry.TABLE_NAME, MoviesContract.MovieEntry.COLUMN_MOVIE_DATA + "=?", new String[]{movieData});
+            case MOVIES_WITH_ID:
+                String movieId = uri.getPathSegments().get(1);
+                tasksDeleted = db.delete(MoviesContract.MovieEntry.TABLE_NAME, MoviesContract.MovieEntry.COLUMN_MOVIE_ID + "=?", new String[]{movieId});
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);

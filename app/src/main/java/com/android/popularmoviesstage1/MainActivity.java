@@ -28,7 +28,7 @@ import java.net.URL;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.ItemClickListener,
-        LoaderManager.LoaderCallbacks<Cursor> {
+        LoaderManager.LoaderCallbacks<Cursor>, CursorAdapter.ItemClickListener {
 
     RecyclerViewAdapter adapter;
     CursorAdapter cursorAdapter;
@@ -77,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     private void LoadMoviesFavoriteData() {
         if (isOnline()) {
             cursorAdapter = new CursorAdapter(this);
+            cursorAdapter.setFavoriteClickListener(this);
             mRecyclerView.setAdapter(cursorAdapter);
             getSupportLoaderManager().initLoader(LOADER_ID, null, this);
         } else {
@@ -126,6 +127,13 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
             String message = "No internet connection detected.";
             Toast.makeText(context, message, Toast.LENGTH_LONG).show();
         }
+    }
+
+    @Override
+    public void onFavoriteClick(View view, String movieId) {
+        Intent myIntent = new Intent(MainActivity.this, DetailsActivity.class);
+        myIntent.putExtra("MOVIE_ID", movieId);
+        MainActivity.this.startActivity(myIntent);
     }
 
     public class MoviesDatabaseQueryTask extends AsyncTask<URL, Void, String> {

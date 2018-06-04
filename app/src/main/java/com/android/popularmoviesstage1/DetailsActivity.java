@@ -42,11 +42,11 @@ public class DetailsActivity extends AppCompatActivity
     TextView mFavoriteText;
     Button mTrailerButton;
     RecyclerView recyclerView;
+    Cursor mCursor;
 
     String mReviewData;
     String mMovieData;
     int mMovieId;
-    Cursor mCursor;
     String mMovieTitle;
 
     private static final String TAG = DetailsActivity.class.getSimpleName();
@@ -66,9 +66,11 @@ public class DetailsActivity extends AppCompatActivity
 
     public void deleteFavorite() {
         Uri uri = MoviesContract.MovieEntry.CONTENT_URI;
-        uri = uri.buildUpon().appendPath(mMovieData).build();
-        getContentResolver().delete(uri, null, null);
-        getSupportLoaderManager().restartLoader(LOADER_ID, null, DetailsActivity.this);
+        uri = uri.buildUpon().appendPath(String.valueOf(mMovieId)).build();
+        int i = getContentResolver().delete(uri, null, null);
+        if (i > 0) {
+            Toast.makeText(this, "Movie deleted from Favorites", Toast.LENGTH_LONG).show();
+        } else {Toast.makeText(this, "Failed to delete", Toast.LENGTH_LONG).show();}
     }
 
     @Override
@@ -115,6 +117,8 @@ public class DetailsActivity extends AppCompatActivity
             mRelease.setText(release);
             mVoting.setText(vote);
             mPlot.setText(plot);
+        } else if (intentThatStartedThisActivity.hasExtra("MOVIE_ID")) {
+
         }
 
         setClicktoTrailer(mTrailerButton);
@@ -124,23 +128,15 @@ public class DetailsActivity extends AppCompatActivity
 
     public void handleFavoriteButton(final ToggleButton toggleButton) {
         getSupportLoaderManager().initLoader(LOADER_ID, null, this);
-        if (mCursor != null && mCursor.moveToFirst()) {
-            toggleButton.setChecked(true);
-            toggleButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_black_48dp));
-        } else {
-            toggleButton.setChecked(false);
-            toggleButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_border_black_48dp));
-        }
         toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    toggleButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_black_48dp));
-                    addFavorite();
-                }
-                else {
+                if (!isChecked && buttonView.isPressed()) {
                     toggleButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_border_black_48dp));
                     deleteFavorite();
+                } else if (isChecked && buttonView.isPressed()){
+                    toggleButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_black_48dp));
+                    addFavorite();
                 }
             }
         });
@@ -165,8 +161,8 @@ public class DetailsActivity extends AppCompatActivity
                 try {
                     return getContentResolver().query(MoviesContract.MovieEntry.CONTENT_URI,
                             null,
-                            MoviesContract.MovieEntry.COLUMN_MOVIE_DATA + "=?",
-                            new String[] {mMovieData},
+                            MoviesContract.MovieEntry.COLUMN_MOVIE_ID + "=?",
+                            new String[] {String.valueOf(mMovieId)},
                             null);
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to asynchronously load data.");
@@ -190,16 +186,17 @@ public class DetailsActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        if (mCursor != data && data != null) {
-            mCursor = data;
+        if (data != null && data.moveToFirst()) {
+            mFavoriteButton.setChecked(true);
+            mFavoriteButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_black_48dp));
+        } else {
+            mFavoriteButton.setChecked(false);
+            mFavoriteButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_border_black_48dp));
         }
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        if (mCursor != null) {
-            mCursor = null;
-        }
     }
 
     public static class ReviewInfoQueryTask extends AsyncTask<URL, Void, String> {

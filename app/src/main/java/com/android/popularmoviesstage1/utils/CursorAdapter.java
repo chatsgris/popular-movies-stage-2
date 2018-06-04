@@ -17,6 +17,8 @@ public class CursorAdapter extends RecyclerView.Adapter<CursorAdapter.ViewHolder
 
     private Cursor mCursor;
     private Context mContext;
+    private ItemClickListener mClickListener;
+    String mMovieId;
 
     public CursorAdapter(Context context) {
         this.mContext = context;
@@ -34,6 +36,7 @@ public class CursorAdapter extends RecyclerView.Adapter<CursorAdapter.ViewHolder
         mCursor.moveToPosition(position);
         String movieString = mCursor.getString(mCursor.getColumnIndex(MoviesContract.MovieEntry.COLUMN_MOVIE_DATA));
         final int id = mCursor.getInt(mCursor.getColumnIndex(MoviesContract.MovieEntry._ID));
+        mMovieId = String.valueOf(mCursor.getInt(mCursor.getColumnIndex(MoviesContract.MovieEntry.COLUMN_MOVIE_ID)));
 
         String posterPath = null;
         String title = null;
@@ -61,7 +64,7 @@ public class CursorAdapter extends RecyclerView.Adapter<CursorAdapter.ViewHolder
         return mCursor.getCount();
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         ImageView movieImageView;
         TextView movieTitleView;
 
@@ -69,6 +72,13 @@ public class CursorAdapter extends RecyclerView.Adapter<CursorAdapter.ViewHolder
             super(itemView);
             movieImageView = itemView.findViewById(R.id.movie_image);
             movieTitleView = itemView.findViewById(R.id.movie_title);
+        }
+
+        @Override
+        public void onClick(View view) {
+            if (mClickListener != null) {
+                mClickListener.onFavoriteClick(view, mMovieId);
+            }
         }
     }
 
@@ -82,5 +92,13 @@ public class CursorAdapter extends RecyclerView.Adapter<CursorAdapter.ViewHolder
             this.notifyDataSetChanged();
         }
         return temp;
+    }
+
+    public void setFavoriteClickListener(CursorAdapter.ItemClickListener itemClickListener) {
+        this.mClickListener = itemClickListener;
+    }
+
+    public interface ItemClickListener {
+        void onFavoriteClick(View view, String movieId);
     }
 }
