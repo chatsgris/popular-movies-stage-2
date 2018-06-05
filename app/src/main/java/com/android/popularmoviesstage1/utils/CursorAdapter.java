@@ -72,6 +72,7 @@ public class CursorAdapter extends RecyclerView.Adapter<CursorAdapter.ViewHolder
             super(itemView);
             movieImageView = itemView.findViewById(R.id.movie_image);
             movieTitleView = itemView.findViewById(R.id.movie_title);
+            itemView.setOnClickListener(this);
         }
 
         @Override

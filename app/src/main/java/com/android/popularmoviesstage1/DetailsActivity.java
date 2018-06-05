@@ -42,12 +42,13 @@ public class DetailsActivity extends AppCompatActivity
     TextView mFavoriteText;
     Button mTrailerButton;
     RecyclerView recyclerView;
-    Cursor mCursor;
 
     String mReviewData;
     String mMovieData;
     int mMovieId;
     String mMovieTitle;
+
+    int MOVIE_SOURCE = 0;
 
     private static final String TAG = DetailsActivity.class.getSimpleName();
     private static final int LOADER_ID = 0;
@@ -89,6 +90,7 @@ public class DetailsActivity extends AppCompatActivity
 
         Intent intentThatStartedThisActivity = getIntent();
         if (intentThatStartedThisActivity.hasExtra(Intent.EXTRA_TEXT)) {
+            MOVIE_SOURCE = 1;
             mMovieData = intentThatStartedThisActivity.getStringExtra(Intent.EXTRA_TEXT);
 
             JSONObject jsonObj;
@@ -118,12 +120,13 @@ public class DetailsActivity extends AppCompatActivity
             mVoting.setText(vote);
             mPlot.setText(plot);
         } else if (intentThatStartedThisActivity.hasExtra("MOVIE_ID")) {
-
+            MOVIE_SOURCE = 2;
+            mMovieId = Integer.parseInt(intentThatStartedThisActivity.getStringExtra("MOVIE_ID"));
         }
 
+        handleFavoriteButton(mFavoriteButton);
         setClicktoTrailer(mTrailerButton);
         setReviewView();
-        handleFavoriteButton(mFavoriteButton);
     }
 
     public void handleFavoriteButton(final ToggleButton toggleButton) {
@@ -187,6 +190,35 @@ public class DetailsActivity extends AppCompatActivity
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         if (data != null && data.moveToFirst()) {
+            if (MOVIE_SOURCE == 2) {
+                mMovieData = data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_MOVIE_DATA));
+
+                JSONObject jsonObj;
+                String poster = null;
+                String release = null;
+                String vote = null;
+                String plot = null;
+
+                try {
+                    jsonObj = new JSONObject(mMovieData);
+                    mMovieTitle = JsonUtils.getMovieTitle(jsonObj);
+                    poster = NetworkUtils.buildPosterUrl(JsonUtils.getPosterPath(jsonObj));
+                    release = JsonUtils.getMovieRelease(jsonObj);
+                    vote = JsonUtils.getMovieVoting(jsonObj);
+                    plot = JsonUtils.getMoviePlot(jsonObj);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                mTitle.setText(mMovieTitle);
+                Picasso.with(mPoster.getContext())
+                        .load(poster)
+                        .placeholder(R.drawable.placeholder)
+                        .into(mPoster);
+                mRelease.setText(release);
+                mVoting.setText(vote);
+                mPlot.setText(plot);
+            }
             mFavoriteButton.setChecked(true);
             mFavoriteButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_black_48dp));
         } else {
