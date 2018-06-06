@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Parcelable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
@@ -17,7 +18,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
-
 import com.android.popularmoviesstage1.data.MoviesContract;
 import com.android.popularmoviesstage1.utils.CursorAdapter;
 import com.android.popularmoviesstage1.utils.JsonUtils;
@@ -36,8 +36,10 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     String mMoviesData;
     RecyclerView mRecyclerView;
     String LOG_SORT = "";
+    Parcelable mScrollState;
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int LOADER_ID = 0;
+    GridLayoutManager mLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +48,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
         mRecyclerView = findViewById(R.id.rvMovies);
         int numberOfColumns = 2;
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns));
+        mLayoutManager = new GridLayoutManager(this, numberOfColumns);
+        mRecyclerView.setLayoutManager(mLayoutManager);
 
         if (savedInstanceState != null) {
             LOG_SORT = savedInstanceState.getString("LOG_SORT");
@@ -66,12 +69,19 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putString("LOG_SORT", LOG_SORT);
-        super.onSaveInstanceState(outState);
+    public void onSaveInstanceState(Bundle state) {
+        state.putString("LOG_SORT", LOG_SORT);
+        mScrollState = mLayoutManager.onSaveInstanceState();
+        state.putParcelable("SCROLL_STATE_KEY", mScrollState);
+        super.onSaveInstanceState(state);
         mRecyclerView = findViewById(R.id.rvMovies);
-        int numberOfColumns = 2;
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns));
+    }
+
+    protected void onRestoreInstanceState(Bundle state) {
+        super.onRestoreInstanceState(state);
+        if(state != null)
+            mScrollState = state.getParcelable("SCROLL_STATE_KEY");
+            LOG_SORT = state.getString("LOG_SORT");
     }
 
     private void LoadMoviesFavoriteData() {
@@ -234,6 +244,9 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     @Override
     protected void onResume() {
         super.onResume();
+        if (mScrollState != null) {
+            mLayoutManager.onRestoreInstanceState(mScrollState);
+        }
         getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
     }
 
