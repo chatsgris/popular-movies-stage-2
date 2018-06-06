@@ -18,6 +18,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
+
+import com.android.popularmoviesstage1.asynctasks.MoviesDatabaseQueryTask;
 import com.android.popularmoviesstage1.data.MoviesContract;
 import com.android.popularmoviesstage1.utils.CursorAdapter;
 import com.android.popularmoviesstage1.utils.JsonUtils;
@@ -27,8 +29,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.ExecutionException;
 
-public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.ItemClickListener,
-        LoaderManager.LoaderCallbacks<Cursor>, CursorAdapter.ItemClickListener {
+public class MainActivity extends AppCompatActivity implements
+        RecyclerViewAdapter.ItemClickListener,
+        LoaderManager.LoaderCallbacks<Cursor>,
+        CursorAdapter.ItemClickListener,
+        MoviesDatabaseQueryTask.MoviesDatabaseAsyncResponse {
 
     RecyclerViewAdapter adapter;
     CursorAdapter cursorAdapter;
@@ -100,9 +105,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     private void LoadMoviesPopularityData() {
         if (isOnline()) {
             try {
-                mMoviesData = new MoviesDatabaseQueryTask().execute(
-                        NetworkUtils.buildPopularityUrl(mApiKey)
-                ).get();
+                mMoviesData = new MoviesDatabaseQueryTask(this).execute(NetworkUtils.buildPopularityUrl(mApiKey)).get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {
@@ -121,9 +124,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     private void LoadMoviesRatingData() {
         if (isOnline()) {
             try {
-                mMoviesData = new MoviesDatabaseQueryTask().execute(
-                        NetworkUtils.buildRatingUrl(mApiKey)
-                ).get();
+                mMoviesData = new MoviesDatabaseQueryTask(this).execute(NetworkUtils.buildRatingUrl(mApiKey)).get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {
@@ -146,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
         MainActivity.this.startActivity(myIntent);
     }
 
-    public class MoviesDatabaseQueryTask extends AsyncTask<URL, Void, String> {
+    /*public class MoviesDatabaseQueryTask extends AsyncTask<URL, Void, String> {
         @Override
         protected String doInBackground(URL... urls) {
             URL url = urls[0];
@@ -158,7 +159,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
             }
             return moviesDatabaseResults;
         }
-    }
+    }*/
 
     @Override
     public void onItemClick(View view, int position) {
@@ -252,15 +253,14 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        if (cursorAdapter != null) {
-            cursorAdapter.swapCursor(data);
-        }
+        if (cursorAdapter != null) {cursorAdapter.swapCursor(data);}
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        if (cursorAdapter != null) {
-            cursorAdapter.swapCursor(null);
-        }
+        if (cursorAdapter != null) {cursorAdapter.swapCursor(null);}
     }
+
+    @Override
+    public void processFinish(String output) {}
 }
