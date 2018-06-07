@@ -253,7 +253,7 @@ public class DetailsActivity extends AppCompatActivity
             public void onClick(View view) {
                 Uri trailerUri = NetworkUtils.buildTrailerUri(MainActivity.mApiKey, mMovieId);
                 Intent intent = new  Intent(Intent.ACTION_VIEW);
-                intent.setPackage("com.google.android.youtube");
+                //intent.setPackage("com.google.android.youtube");
                 intent.setData(trailerUri);
 
                 PackageManager packageManager = getPackageManager();
