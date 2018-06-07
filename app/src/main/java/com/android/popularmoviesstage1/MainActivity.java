@@ -1,6 +1,8 @@
 package com.android.popularmoviesstage1;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -27,6 +29,7 @@ import com.android.popularmoviesstage1.utils.NetworkUtils;
 import org.json.JSONException;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity implements
@@ -144,22 +147,15 @@ public class MainActivity extends AppCompatActivity implements
     public void onFavoriteClick(View view, String movieId) {
         Intent myIntent = new Intent(MainActivity.this, DetailsActivity.class);
         myIntent.putExtra("MOVIE_ID", movieId);
-        MainActivity.this.startActivity(myIntent);
-    }
 
-    /*public class MoviesDatabaseQueryTask extends AsyncTask<URL, Void, String> {
-        @Override
-        protected String doInBackground(URL... urls) {
-            URL url = urls[0];
-            String moviesDatabaseResults = null;
-            try {
-                moviesDatabaseResults = NetworkUtils.getResponseFromHttpUrl(url);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return moviesDatabaseResults;
+        PackageManager packageManager = getPackageManager();
+        List<ResolveInfo> activities = packageManager.queryIntentActivities(myIntent,
+                PackageManager.MATCH_DEFAULT_ONLY);
+        boolean isIntentSafe = activities.size() > 0;
+        if (isIntentSafe) {
+            MainActivity.this.startActivity(myIntent);
         }
-    }*/
+    }
 
     @Override
     public void onItemClick(View view, int position) {
@@ -171,7 +167,14 @@ public class MainActivity extends AppCompatActivity implements
             e.printStackTrace();
         }
         myIntent.putExtra(Intent.EXTRA_TEXT, movieData);
-        MainActivity.this.startActivity(myIntent);
+
+        PackageManager packageManager = getPackageManager();
+        List<ResolveInfo> activities = packageManager.queryIntentActivities(myIntent,
+                PackageManager.MATCH_DEFAULT_ONLY);
+        boolean isIntentSafe = activities.size() > 0;
+        if (isIntentSafe) {
+            MainActivity.this.startActivity(myIntent);
+        }
     }
 
     @Override
