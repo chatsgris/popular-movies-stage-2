@@ -23,12 +23,7 @@ import com.android.popularmoviesstage1.utils.CursorAdapter;
 import com.android.popularmoviesstage1.utils.JsonUtils;
 import com.android.popularmoviesstage1.utils.NetworkUtils;
 import org.json.JSONException;
-<<<<<<< HEAD
-=======
-import java.io.IOException;
-import java.net.URL;
 import java.util.List;
->>>>>>> 5fc0d60309dec3ef0ba511d72a9b050ae0315f2e
 import java.util.concurrent.ExecutionException;
 
 import static com.android.popularmoviesstage1.utils.NetworkUtils.isOnline;
@@ -41,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements
 
     RecyclerViewAdapter adapter;
     CursorAdapter cursorAdapter;
-    static String mApiKey = "6395d986e7ebd845e21161e14ab87ee7";
+    static String mApiKey = "[YOUR_API_KEY]";
     String mMoviesData;
     RecyclerView mRecyclerView;
     String LOG_SORT = "";
@@ -146,9 +141,7 @@ public class MainActivity extends AppCompatActivity implements
     public void onFavoriteClick(View view, String movieId) {
         Intent myIntent = new Intent(MainActivity.this, DetailsActivity.class);
         myIntent.putExtra("MOVIE_ID", movieId);
-
-<<<<<<< HEAD
-=======
+        
         PackageManager packageManager = getPackageManager();
         List<ResolveInfo> activities = packageManager.queryIntentActivities(myIntent,
                 PackageManager.MATCH_DEFAULT_ONLY);
@@ -158,7 +151,6 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
->>>>>>> 5fc0d60309dec3ef0ba511d72a9b050ae0315f2e
     @Override
     public void onItemClick(View view, int position) {
         Intent myIntent = new Intent(MainActivity.this, DetailsActivity.class);
