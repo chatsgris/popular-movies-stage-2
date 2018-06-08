@@ -52,11 +52,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     public int getItemCount() {
         JSONObject jsonObject;
         int count = 0;
-        try {
-            jsonObject = new JSONObject(mData);
-            count = jsonObject.getJSONArray("results").length();
-        } catch (JSONException e) {
-            e.printStackTrace();
+        if (mData != null) {
+            try {
+                jsonObject = new JSONObject(mData);
+                count = jsonObject.getJSONArray("results").length();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
         return count;
     }
