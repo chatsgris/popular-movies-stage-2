@@ -1,10 +1,9 @@
 package com.android.popularmoviesstage1;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Parcelable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -18,16 +17,21 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
-
 import com.android.popularmoviesstage1.asynctasks.MoviesDatabaseQueryTask;
 import com.android.popularmoviesstage1.data.MoviesContract;
 import com.android.popularmoviesstage1.utils.CursorAdapter;
 import com.android.popularmoviesstage1.utils.JsonUtils;
 import com.android.popularmoviesstage1.utils.NetworkUtils;
 import org.json.JSONException;
+<<<<<<< HEAD
+=======
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
+>>>>>>> 5fc0d60309dec3ef0ba511d72a9b050ae0315f2e
 import java.util.concurrent.ExecutionException;
+
+import static com.android.popularmoviesstage1.utils.NetworkUtils.isOnline;
 
 public class MainActivity extends AppCompatActivity implements
         RecyclerViewAdapter.ItemClickListener,
@@ -45,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int LOADER_ID = 0;
     GridLayoutManager mLayoutManager;
+    Context mContext = MainActivity.this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,20 +95,19 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void LoadMoviesFavoriteData() {
-        if (isOnline()) {
+        if (isOnline(mContext)) {
             cursorAdapter = new CursorAdapter(this);
             cursorAdapter.setFavoriteClickListener(this);
             mRecyclerView.setAdapter(cursorAdapter);
             getSupportLoaderManager().initLoader(LOADER_ID, null, this);
         } else {
-            Context context = MainActivity.this;
             String message = "No internet connection detected.";
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+            Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
         }
     }
 
     private void LoadMoviesPopularityData() {
-        if (isOnline()) {
+        if (isOnline(mContext)) {
             try {
                 mMoviesData = new MoviesDatabaseQueryTask(this).execute(NetworkUtils.buildPopularityUrl(mApiKey)).get();
             } catch (InterruptedException e) {
@@ -115,14 +119,13 @@ public class MainActivity extends AppCompatActivity implements
             adapter.setClickListener(this);
             mRecyclerView.setAdapter(adapter);
         } else {
-            Context context = MainActivity.this;
             String message = "No internet connection detected.";
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+            Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
         }
     }
 
     private void LoadMoviesRatingData() {
-        if (isOnline()) {
+        if (isOnline(mContext)) {
             try {
                 mMoviesData = new MoviesDatabaseQueryTask(this).execute(NetworkUtils.buildRatingUrl(mApiKey)).get();
             } catch (InterruptedException e) {
@@ -134,9 +137,8 @@ public class MainActivity extends AppCompatActivity implements
             adapter.setClickListener(this);
             mRecyclerView.setAdapter(adapter);
         } else {
-            Context context = MainActivity.this;
             String message = "No internet connection detected.";
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+            Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -144,23 +146,19 @@ public class MainActivity extends AppCompatActivity implements
     public void onFavoriteClick(View view, String movieId) {
         Intent myIntent = new Intent(MainActivity.this, DetailsActivity.class);
         myIntent.putExtra("MOVIE_ID", movieId);
-        MainActivity.this.startActivity(myIntent);
+
+<<<<<<< HEAD
+=======
+        PackageManager packageManager = getPackageManager();
+        List<ResolveInfo> activities = packageManager.queryIntentActivities(myIntent,
+                PackageManager.MATCH_DEFAULT_ONLY);
+        boolean isIntentSafe = activities.size() > 0;
+        if (isIntentSafe) {
+            MainActivity.this.startActivity(myIntent);
+        }
     }
 
-    /*public class MoviesDatabaseQueryTask extends AsyncTask<URL, Void, String> {
-        @Override
-        protected String doInBackground(URL... urls) {
-            URL url = urls[0];
-            String moviesDatabaseResults = null;
-            try {
-                moviesDatabaseResults = NetworkUtils.getResponseFromHttpUrl(url);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return moviesDatabaseResults;
-        }
-    }*/
-
+>>>>>>> 5fc0d60309dec3ef0ba511d72a9b050ae0315f2e
     @Override
     public void onItemClick(View view, int position) {
         Intent myIntent = new Intent(MainActivity.this, DetailsActivity.class);
@@ -171,7 +169,14 @@ public class MainActivity extends AppCompatActivity implements
             e.printStackTrace();
         }
         myIntent.putExtra(Intent.EXTRA_TEXT, movieData);
-        MainActivity.this.startActivity(myIntent);
+
+        PackageManager packageManager = getPackageManager();
+        List<ResolveInfo> activities = packageManager.queryIntentActivities(myIntent,
+                PackageManager.MATCH_DEFAULT_ONLY);
+        boolean isIntentSafe = activities.size() > 0;
+        if (isIntentSafe) {
+            MainActivity.this.startActivity(myIntent);
+        }
     }
 
     @Override
@@ -197,13 +202,6 @@ public class MainActivity extends AppCompatActivity implements
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    public boolean isOnline() {
-        ConnectivityManager cm =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     @Override
