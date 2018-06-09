@@ -209,7 +209,7 @@ public class DetailsActivity extends AppCompatActivity
                     null,
                     null,
                     null,
-                    null);
+                    MoviesContract.MovieEntry.COLUMN_MOVIE_ID);
         }
     }
 
