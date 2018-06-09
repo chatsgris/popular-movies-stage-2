@@ -138,9 +138,9 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onFavoriteClick(View view, String movieId) {
+    public void onFavoriteClick(View view, int position) {
         Intent myIntent = new Intent(MainActivity.this, DetailsActivity.class);
-        myIntent.putExtra("MOVIE_ID", movieId);
+        myIntent.putExtra("POSITION", position);
         
         PackageManager packageManager = getPackageManager();
         List<ResolveInfo> activities = packageManager.queryIntentActivities(myIntent,

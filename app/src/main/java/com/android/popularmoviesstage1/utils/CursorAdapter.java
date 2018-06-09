@@ -78,7 +78,7 @@ public class CursorAdapter extends RecyclerView.Adapter<CursorAdapter.ViewHolder
         @Override
         public void onClick(View view) {
             if (mClickListener != null) {
-                mClickListener.onFavoriteClick(view, mMovieId);
+                mClickListener.onFavoriteClick(view, getAdapterPosition());
             }
         }
     }
@@ -100,6 +100,6 @@ public class CursorAdapter extends RecyclerView.Adapter<CursorAdapter.ViewHolder
     }
 
     public interface ItemClickListener {
-        void onFavoriteClick(View view, String movieId);
+        void onFavoriteClick(View view, int position);
     }
 }

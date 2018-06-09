@@ -16,4 +16,9 @@ public class FavoriteAsyncHandler extends AsyncQueryHandler {
 
     @Override
     protected void onDeleteComplete(int token, Object cookie, int result) {}
+
+    @Override
+    protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
+        super.onQueryComplete(token, cookie, cursor);
+    }
 }

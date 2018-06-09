@@ -54,6 +54,7 @@ public class DetailsActivity extends AppCompatActivity
     String mReviewData;
     String mMovieData;
     int mMovieId;
+    int mPosition;
     String mMovieTitle;
 
     int MOVIE_SOURCE = 0;
@@ -61,11 +62,11 @@ public class DetailsActivity extends AppCompatActivity
     private static final String TAG = DetailsActivity.class.getSimpleName();
     private static final int LOADER_ID = 0;
 
-    public void addFavorite() {
+    public void addFavorite(int movieId, String movieData, String movieTitle) {
         ContentValues cv = new ContentValues();
-        cv.put(MoviesContract.MovieEntry.COLUMN_MOVIE_DATA, mMovieData);
-        cv.put(MoviesContract.MovieEntry.COLUMN_MOVIE_ID, mMovieId);
-        cv.put(MoviesContract.MovieEntry.COLUMN_TITLE, mMovieTitle);
+        cv.put(MoviesContract.MovieEntry.COLUMN_MOVIE_DATA, movieData);
+        cv.put(MoviesContract.MovieEntry.COLUMN_MOVIE_ID, movieId);
+        cv.put(MoviesContract.MovieEntry.COLUMN_TITLE, movieTitle);
 
         FavoriteAsyncHandler asyncHandler = new FavoriteAsyncHandler(getContentResolver()) {
             @Override
@@ -78,9 +79,9 @@ public class DetailsActivity extends AppCompatActivity
         asyncHandler.startInsert(1, null, MoviesContract.MovieEntry.CONTENT_URI, cv);
     }
 
-    public void deleteFavorite() {
+    public void deleteFavorite(int movieId) {
         Uri uri = MoviesContract.MovieEntry.CONTENT_URI;
-        uri = uri.buildUpon().appendPath(String.valueOf(mMovieId)).build();
+        uri = uri.buildUpon().appendPath(String.valueOf(movieId)).build();
 
         FavoriteAsyncHandler asyncHandler = new FavoriteAsyncHandler(getContentResolver()) {
             @Override
@@ -138,35 +139,90 @@ public class DetailsActivity extends AppCompatActivity
             mRelease.setText(release);
             mVoting.setText(vote);
             mPlot.setText(plot);
-        } else if (intentThatStartedThisActivity.hasExtra("MOVIE_ID")) {
+
+            getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+
+            Context context = DetailsActivity.this;
+            if (isOnline(context)) {
+                setClicktoTrailer(mTrailerButton, mMovieId);
+                setReviewView(mMovieId);
+            } else {
+                String message = "No internet. Trailer and Reviews are unavailable.";
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+            }
+
+            handleFavoriteButton(mFavoriteButton, mMovieId, mMovieData, mMovieTitle);
+
+        } else if (intentThatStartedThisActivity.hasExtra("POSITION")) {
             MOVIE_SOURCE = 2;
-            mMovieId = Integer.parseInt(intentThatStartedThisActivity.getStringExtra("MOVIE_ID"));
+            mPosition = intentThatStartedThisActivity.getIntExtra("POSITION", 0);
+            FavoriteAsyncHandler asyncHandler = new FavoriteAsyncHandler(getContentResolver()) {
+                @Override
+                protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
+                    JSONObject jsonObj;
+                    String poster = null;
+                    String release = null;
+                    String vote = null;
+                    String plot = null;
+                    String movieTitle = null;
+                    int movieId = 0;
+
+                    if (cursor != null && cursor.moveToPosition(mPosition)) {
+                        String movieData = cursor.getString(cursor.getColumnIndex(MoviesContract.MovieEntry.COLUMN_MOVIE_DATA));
+
+                        try {
+                            jsonObj = new JSONObject(movieData);
+                            movieTitle = JsonUtils.getMovieTitle(jsonObj);
+                            poster = NetworkUtils.buildPosterUrl(JsonUtils.getPosterPath(jsonObj));
+                            release = JsonUtils.getMovieRelease(jsonObj);
+                            vote = JsonUtils.getMovieVoting(jsonObj);
+                            plot = JsonUtils.getMoviePlot(jsonObj);
+                            movieId = JsonUtils.getMovieId(jsonObj);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        mTitle.setText(movieTitle);
+                        Picasso.with(mPoster.getContext())
+                                .load(poster)
+                                .placeholder(R.drawable.placeholder)
+                                .into(mPoster);
+                        mRelease.setText(release);
+                        mVoting.setText(vote);
+                        mPlot.setText(plot);
+
+                        if (isOnline(DetailsActivity.this)) {
+                            setClicktoTrailer(mTrailerButton, movieId);
+                            setReviewView(movieId);
+                        } else {
+                            String message = "No internet. Trailer and Reviews are unavailable.";
+                            Toast.makeText(DetailsActivity.this, message, Toast.LENGTH_LONG).show();
+                        }
+
+                        handleFavoriteButton(mFavoriteButton, movieId, movieData, movieTitle);
+                    }
+                }
+            };
+            asyncHandler.startQuery(1,
+                    null,
+                    MoviesContract.MovieEntry.CONTENT_URI,
+                    null,
+                    null,
+                    null,
+                    null);
         }
-
-        handleFavoriteButton(mFavoriteButton);
-
-        Context context = DetailsActivity.this;
-        if (isOnline(context)) {
-            setClicktoTrailer(mTrailerButton);
-            setReviewView();
-        } else {
-            String message = "No internet. Trailer and Reviews are unavailable.";
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-        }
-
     }
 
-    public void handleFavoriteButton(final ToggleButton toggleButton) {
-        getSupportLoaderManager().initLoader(LOADER_ID, null, this);
+    public void handleFavoriteButton(final ToggleButton toggleButton, final int movieId, final String movieData, final String movieTitle) {
         toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (!isChecked && buttonView.isPressed()) {
                     toggleButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_border_black_48dp));
-                    deleteFavorite();
+                    deleteFavorite(movieId);
                 } else if (isChecked && buttonView.isPressed()){
                     toggleButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_black_48dp));
-                    addFavorite();
+                    addFavorite(movieId, movieData, movieTitle);
                 }
             }
         });
@@ -216,41 +272,17 @@ public class DetailsActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        if (data != null && data.moveToFirst()) {
-            if (MOVIE_SOURCE == 2) {
-                mMovieData = data.getString(data.getColumnIndex(MoviesContract.MovieEntry.COLUMN_MOVIE_DATA));
-
-                JSONObject jsonObj;
-                String poster = null;
-                String release = null;
-                String vote = null;
-                String plot = null;
-
-                try {
-                    jsonObj = new JSONObject(mMovieData);
-                    mMovieTitle = JsonUtils.getMovieTitle(jsonObj);
-                    poster = NetworkUtils.buildPosterUrl(JsonUtils.getPosterPath(jsonObj));
-                    release = JsonUtils.getMovieRelease(jsonObj);
-                    vote = JsonUtils.getMovieVoting(jsonObj);
-                    plot = JsonUtils.getMoviePlot(jsonObj);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                mTitle.setText(mMovieTitle);
-                Picasso.with(mPoster.getContext())
-                        .load(poster)
-                        .placeholder(R.drawable.placeholder)
-                        .into(mPoster);
-                mRelease.setText(release);
-                mVoting.setText(vote);
-                mPlot.setText(plot);
+        if (MOVIE_SOURCE == 1) {
+            if (data != null && data.moveToNext()) {
+                mFavoriteButton.setChecked(true);
+                mFavoriteButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_black_48dp));
+            } else {
+                mFavoriteButton.setChecked(false);
+                mFavoriteButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_border_black_48dp));
             }
+        } else {
             mFavoriteButton.setChecked(true);
             mFavoriteButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_black_48dp));
-        } else {
-            mFavoriteButton.setChecked(false);
-            mFavoriteButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.baseline_favorite_border_black_48dp));
         }
     }
 
@@ -258,13 +290,12 @@ public class DetailsActivity extends AppCompatActivity
     public void onLoaderReset(Loader<Cursor> loader) {
     }
 
-    public void setClicktoTrailer(Button trailerButton) {
+    public void setClicktoTrailer(Button trailerButton, final int movieId) {
         trailerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Uri trailerUri = NetworkUtils.buildTrailerUri(MainActivity.mApiKey, mMovieId);
+                Uri trailerUri = NetworkUtils.buildTrailerUri(MainActivity.mApiKey, movieId);
                 Intent intent = new  Intent(Intent.ACTION_VIEW);
-                //intent.setPackage("com.google.android.youtube");
                 intent.setData(trailerUri);
 
                 PackageManager packageManager = getPackageManager();
@@ -276,9 +307,9 @@ public class DetailsActivity extends AppCompatActivity
         });
     }
 
-    public void setReviewView() {
+    public void setReviewView(int movieId) {
         try {
-            mReviewData = new ReviewInfoQueryTask(this).execute(NetworkUtils.buildReviewUrl(MainActivity.mApiKey, mMovieId)).get();
+            mReviewData = new ReviewInfoQueryTask(this).execute(NetworkUtils.buildReviewUrl(MainActivity.mApiKey, movieId)).get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
